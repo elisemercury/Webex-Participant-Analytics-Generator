@@ -11,6 +11,7 @@ myClientID = os.environ["CLIENT_ID"]
 myClientSecret = os.environ["CLIENT_SECRET"]
 myScope = os.environ["SCOPE"]
 myRedirectURI = os.environ["REDIRECT_URL"]
+APP_URL = os.environ["APP_URL"]
 
 app = Flask(__name__)
 
@@ -18,7 +19,7 @@ app = Flask(__name__)
 @app.route('/')
 def hello():
     login_msg = "Please log in to Webex to start."
-    return render_template('login.html', login_msg=login_msg)
+    return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # --- perform login
 @app.route('/gologin')
@@ -80,7 +81,7 @@ def get_myDetails(mytoken):
 def home():
     try:
         if myUsername:
-            return render_template('main-fetch.html', username=myUsername)
+            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername)
     except:
         return redirect('/')
 
@@ -94,20 +95,20 @@ def post_meeting_nr():
         meeting_id, meeting_name, meeting_date = get_meetingID(myAccessToken, meeting_nr)
     except:
         login_msg = "⚠️You have been logged out. Please log in to Webex to start."
-        return render_template('login.html', login_msg=login_msg)
+        return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
     if not meeting_id:
         notification = "Could not fetch meeting data for meeting number:" + meeting_nr
-        return render_template('main-fetch.html', username=myUsername, notification=notification)
+        return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
     else:
         # fetch participant data for meeting id
         participant_info = get_participant_info(myAccessToken, meeting_id)
         if not participant_info:
             notification = "Could not fetch participant data for meeting number: " + meeting_nr
-            return render_template('main-fetch.html', username=myUsername, notification=notification)            
+            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)            
         export = create_xlsx_report(participant_info)
         if not export:
             notification = "Could not create participant report for meeting number: " + meeting_nr
-            return render_template('main-fetch.html', username=myUsername, notification=notification)
+            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
         global meeting_nr_formatted
         meeting_nr_formatted = meeting_nr[0:4] + " " + meeting_nr[4:7] + " " + meeting_nr[7:]
         return redirect('/success')
@@ -187,10 +188,10 @@ def create_xlsx_report(particpant_info):
 def success():
     try:
         if myUsername:
-             return render_template('main-fetch-success.html', username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
+             return render_template('main-fetch-success.html', app_url=APP_URL, username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
     except:
         login_msg = "⚠️You have been logged out. Please log in to Webex to start."
-        return render_template('login.html', login_msg=login_msg)
+        return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # --- download participant report
 @app.route("/success", methods=['POST'])
@@ -203,7 +204,7 @@ def download_report():
 # --- help page
 @app.route("/help")
 def help():
-    return render_template('help.html')
+    return render_template('help.html', app_url=APP_URL)
 
 if __name__ == '__main__':
     app.run()
