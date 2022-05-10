@@ -11329,7 +11329,7 @@ header.masthead {
   min-height: 100%;
   position: relative;
   background-color: #343a40;
-  background: url("../assets/img/bg-masthead.jpg") no-repeat center center;
+  background: url("../assets/img/background.jpg") no-repeat center center;
   background-size: cover;
 }
 header.masthead:before {
