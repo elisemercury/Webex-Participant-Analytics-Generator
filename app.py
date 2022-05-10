@@ -7,7 +7,7 @@ import os
 
 # --- base variables
 base_URL = os.environ["BASE_URL"]
-myClientID = os.environ["CLIENT_ID"]
+myClientID = os.environ["CLIENT_ID"] 
 myClientSecret = os.environ["CLIENT_SECRET"]
 myScope = os.environ["SCOPE"]
 myRedirectURI = os.environ["REDIRECT_URL"]
