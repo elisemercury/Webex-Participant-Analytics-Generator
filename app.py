@@ -145,7 +145,7 @@ def get_participant_info(mytoken, meeting_id):
 # create participant report
 def create_xlsx_report(particpant_info):
     try:
-        workbook = xlsxwriter.Workbook("outputs/" + meeting_name + "_" + meeting_date + '_participant_analytics.xlsx')
+        workbook = xlsxwriter.Workbook(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx')
         worksheet = workbook.add_worksheet()
 
         bold = workbook.add_format({'bold': True})
@@ -200,7 +200,7 @@ def success():
 # --- download participant report
 @app.route("/success", methods=['POST'])
 def download_report():
-    return send_file("outputs/" + meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
+    return send_file(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
                      mimetype='application/vnd.ms-excel',
                      attachment_filename=meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
                      as_attachment=True)
