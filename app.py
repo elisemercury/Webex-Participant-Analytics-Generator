@@ -106,13 +106,15 @@ def post_meeting_nr():
         global meeting_nr_formatted
         meeting_nr_formatted = meeting_nr[0:4] + " " + meeting_nr[4:7] + " " + meeting_nr[7:]
         return redirect('/success')
-    except:
+    except Exception as e:
         try:
             if myUsername:
                 notification = "Could not fetch meeting data for meeting number: " + meeting_nr
+                print(e)
                 return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
         except:
             login_msg = "⚠️You have been logged out. Please log in to Webex to start."
+            print(e)
             return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # meeting ID from meeting Nr
