@@ -93,13 +93,7 @@ def post_meeting_nr():
     try:
         global meeting_name, meeting_date
         meeting_id, meeting_name, meeting_date = get_meetingID(myAccessToken, meeting_nr)
-    except:
-        login_msg = "⚠️You have been logged out. Please log in to Webex to start."
-        return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
-    if not meeting_id:
-        notification = "Could not fetch meeting data for meeting number:" + meeting_nr
-        return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
-    else:
+        
         # fetch participant data for meeting id
         participant_info = get_participant_info(myAccessToken, meeting_id)
         if not participant_info:
@@ -112,6 +106,14 @@ def post_meeting_nr():
         global meeting_nr_formatted
         meeting_nr_formatted = meeting_nr[0:4] + " " + meeting_nr[4:7] + " " + meeting_nr[7:]
         return redirect('/success')
+    except:
+        try:
+            if myUsername:
+                notification = "Could not fetch meeting data for meeting number: " + meeting_nr
+                return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
+        except:
+            login_msg = "⚠️You have been logged out. Please log in to Webex to start."
+            return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # meeting ID from meeting Nr
 def get_meetingID(mytoken, meeting_nr):
@@ -198,7 +200,7 @@ def success():
 def download_report():
     return send_file("outputs/" + meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
                      mimetype='application/vnd.ms-excel',
-                     attachment_filename="outputs/" + meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
+                     attachment_filename=meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
                      as_attachment=True)
 
 # --- help page
@@ -206,5 +208,12 @@ def download_report():
 def help():
     return render_template('help.html', app_url=APP_URL)
 
+# --- handle 404 errors
+@app.errorhandler(404)
+def page_not_found(e):
+    login_msg = "Please log in to Webex to start."
+    return render_template('login.html', app_url=APP_URL, login_msg=login_msg), 404
+
+# --- run the app
 if __name__ == '__main__':
     app.run()
