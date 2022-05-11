@@ -190,12 +190,13 @@ def create_xlsx_report(particpant_info):
 
                 total = left - joined 
 
-                worksheet.write_datetime(row, col+5, total, date_format, bold)
+                worksheet.write_datetime(row, col+5, total, date_format)
                 row += 1
             
         workbook.close()
         return True
     except Exception as e:
+        print(e)
         return False
 
 # --- successfully fetched participant data

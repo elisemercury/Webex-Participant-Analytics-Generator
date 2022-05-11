@@ -17,7 +17,7 @@
             <div class="text-center text-white">
                 <!-- Titles -->
                 <h1 class="mb-4">Success!</h1>
-                <h5 class="mb-3">Webex participant data has been fetched for meeting <i>"{{ meeting_name }}"</i> and number: <i>{{ meeting_nr }}</i></h5>
+                <h5 class="mb-3">Webex participant data fetched for meeting <i>"{{ meeting_name }}"</i> and number: <i>{{ meeting_nr }}</i></h5>
                 <h5 class="mb-3">You can download the Webex participant analysis report for your meeting below:</h5>
                 <form class="form-subscribe" id="contactForm" method="POST">
                     <!-- Download report-->
@@ -26,6 +26,7 @@
                     </div>
                 </form>
                 <h6 class="mt-3">Thanks for using the Webex Participant Analytics Generator!</h6>
+                <h6><a class="mb-2 nav-link text-decoration-underline" href='{{ app_url }}main'>Generate another report</a></h6>
             </div>
         </div>
     </div>
