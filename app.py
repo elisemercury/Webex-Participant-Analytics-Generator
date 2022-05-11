@@ -46,7 +46,8 @@ def gologin():
         myUsername = get_myDetails(myAccessToken)
         return redirect('/main')
     else:
-        return "<hr><strong>Access Token: </strong><br>" + myAccessToken + "<br><hr>"
+        login_msg = "There was an issue authenticating you with Webex. Please try again."
+        return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # create redirect URL
 def get_oauthRedirectUrl(myClientID, myRedirectURI, myScope):
@@ -107,6 +108,7 @@ def post_meeting_nr():
         meeting_nr_formatted = meeting_nr[0:4] + " " + meeting_nr[4:7] + " " + meeting_nr[7:]
         return redirect('/success')
     except Exception as e:
+        print(e)
         try:
             if myUsername:
                 notification = "Could not fetch meeting data for meeting number: " + meeting_nr
@@ -224,7 +226,8 @@ def help():
 # --- handle 404 errors
 @app.errorhandler(404)
 def page_not_found(e):
-    return redirect('/'), 404
+    login_msg = "Please log in with Webex to start."
+    return render_template('login.html', app_url=APP_URL, login_msg=login_msg), 404
 
 # --- run the app
 if __name__ == '__main__':
