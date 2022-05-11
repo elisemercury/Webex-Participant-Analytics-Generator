@@ -86,7 +86,7 @@ def get_myDetails(mytoken):
 @app.route('/main')
 def home():
     try:
-        myUsername=str(datastore.get('myUsername'))
+        myUsername=datastore.get('myUsername').decode()
         if myUsername != "None":
             return render_template('main-fetch.html', app_url=APP_URL, username=myUsername)
     except:
@@ -95,8 +95,8 @@ def home():
 # --- fetch participant data by meeting number
 @app.route('/main', methods=['POST'])
 def post_meeting_nr():
-    myUsername=str(datastore.get('myUsername'))
-    myAccessToken=str(datastore.get('myAccessToken'))
+    myUsername=datastore.get('myUsername').decode()
+    myAccessToken=datastore.get('myAccessToken').decode()
     meeting_nr = "".join(request.form['meeting_nr'].split())
     # fetch meeting_id by meeting number
     try:
@@ -155,8 +155,8 @@ def get_participant_info(mytoken, meeting_id):
 
 # create participant report
 def create_xlsx_report(particpant_info):
-    meeting_name=str(datastore.get("meeting_name"))
-    meeting_date=str(datastore.get("meeting_date"))
+    meeting_name=datastore.get("meeting_name").decode()
+    meeting_date=datastore.get("meeting_date").decode()
     try:
         workbook = xlsxwriter.Workbook(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx')
         worksheet = workbook.add_worksheet()
@@ -217,9 +217,9 @@ def create_xlsx_report(particpant_info):
 @app.route("/success")
 def success():
     try:
-        meeting_name=str(datastore.get("meeting_name"))
-        meeting_nr_formatted=str(datastore.get("meeting_nr_formatted"))
-        myUsername=str(datastore.get('myUsername'))
+        meeting_name=datastore.get("meeting_name").decode()
+        meeting_nr_formatted=datastore.get("meeting_nr_formatted").decode()
+        myUsername=datastore.get('myUsername').decode()
         if myUsername:
              return render_template('main-fetch-success.html', app_url=APP_URL, username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
     except:
@@ -230,8 +230,8 @@ def success():
 # --- download participant report
 @app.route("/success", methods=['POST'])
 def download_report():
-    meeting_name=str(datastore.get("meeting_name"))
-    meeting_date=str(datastore.get("meeting_date"))
+    meeting_name=datastore.get("meeting_name").decode()
+    meeting_date=datastore.get("meeting_date").decode()
     return send_file(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
                      mimetype='application/vnd.ms-excel',
                      attachment_filename=meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
