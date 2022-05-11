@@ -196,7 +196,6 @@ def create_xlsx_report(particpant_info):
         workbook.close()
         return True
     except Exception as e:
-        print(e)
         return False
 
 # --- successfully fetched participant data
