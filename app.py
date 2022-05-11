@@ -19,7 +19,7 @@ app = Flask(__name__)
 # --- landing page
 @app.route('/')
 def hello():
-    login_msg = "Please log in to Webex to start."
+    login_msg = "Please log in with Webex to start."
     return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # --- perform login
@@ -112,7 +112,7 @@ def post_meeting_nr():
                 notification = "Could not fetch meeting data for meeting number: " + meeting_nr
                 return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
         except:
-            login_msg = "⚠️You have been logged out. Please log in to Webex to start."
+            login_msg = "⚠️You have been logged out. Please log in with Webex to start."
             return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # meeting ID from meeting Nr
@@ -205,7 +205,7 @@ def success():
         if myUsername:
              return render_template('main-fetch-success.html', app_url=APP_URL, username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
     except:
-        login_msg = "⚠️You have been logged out. Please log in to Webex to start."
+        login_msg = "⚠️You have been logged out. Please log in with Webex to start."
         return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # --- download participant report
@@ -224,8 +224,7 @@ def help():
 # --- handle 404 errors
 @app.errorhandler(404)
 def page_not_found(e):
-    login_msg = "Please log in to Webex to start."
-    return render_template('login.html', app_url=APP_URL, login_msg=login_msg), 404
+    return redirect('/'), 404
 
 # --- run the app
 if __name__ == '__main__':
