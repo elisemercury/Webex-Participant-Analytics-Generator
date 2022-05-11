@@ -18,14 +18,12 @@
                 <!-- Titles -->
                 <h1 class="mb-4">Webex Participant Analytics Generator</h1>
                 <h3 class="mb-3">Please input your 10-digit Webex Meeting Number:</h3>
-                <form class="form-subscribe" id="contactForm" method="POST">
-                    <!-- Meeting Nr input-->
-                    <div class="row justify-content-center">
-                        <div class="col-md-5">
-                            <input name="meeting_nr" class="form-control form-control-lg" id="meetingNr" type="text" placeholder="Meeting Number" data-sb-validations="required,meetingNr" />
-                        </div>
-                        <div class="mb-2 col-auto"><button class="btn btn-primary btn-lg" id="submitButton" type="submit">Submit</button></div>
-                </form>
+                <!-- Meeting Nr input-->
+                <div class="row justify-content-center">
+                    <div class="col-md-5">
+                        <input name="meeting_nr" class="form-control form-control-lg" id="meetingNr" type="text" placeholder="Meeting Number" data-sb-validations="required,meetingNr" />
+                    </div>
+                    <div class="mb-2 col-auto"><button class="btn btn-primary btn-lg" onclick = "onMeetingNrSubmitted()">Submit</button></div>
                 <h5 class="mb-1">{{ notification }}</h5>
                 <h6><a class="mb-2 nav-link text-decoration-underline" href='{{ app_url }}help'>How to use?</a></h6>
             </div>

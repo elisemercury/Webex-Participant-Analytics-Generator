@@ -1,4 +1,5 @@
-from flask import Flask, redirect, request, render_template, send_file
+from __future__ import print_function
+from flask import Flask, redirect, request, render_template, send_file, url_for
 import requests
 import urllib.parse
 import datetime
@@ -6,12 +7,12 @@ import xlsxwriter
 import os
 
 # --- base variables
-base_URL = os.environ["BASE_URL"]
-myClientID = os.environ["CLIENT_ID"] 
-myClientSecret = os.environ["CLIENT_SECRET"]
-myScope = os.environ["SCOPE"]
-myRedirectURI = os.environ["REDIRECT_URL"]
-APP_URL = os.environ["APP_URL"]
+# base_URL = os.environ["BASE_URL"]
+# myClientID = os.environ["CLIENT_ID"] 
+# myClientSecret = os.environ["CLIENT_SECRET"]
+# myScope = os.environ["SCOPE"]
+# myRedirectURI = os.environ["REDIRECT_URL"]
+# APP_URL = os.environ["APP_URL"]
 
 app = Flask(__name__)
 
@@ -77,19 +78,59 @@ def get_myDetails(mytoken):
     return result.json()["userName"]
 
 # login successfull, now enter meeting nr to fetch data for
-@app.route('/main')
+@app.route('/main', methods=['GET', 'POST'])
 def home():
-    try:
-        if myUsername:
-            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername)
-    except:
-        return redirect('/')
+    if request.method == 'GET':
+        print("IN GET")
+        try:
+            if myUsername:
+                return render_template('main-fetch.html', app_url=APP_URL, username=myUsername)
+        except:
+            return redirect('/')
+    if request.method == 'POST':
+        print("IN POST")
+        # meeting_nr = "".join(request.form['meeting_nr'].split())
+        # fetch meeting_id by meeting number
+        params = request.get_json()
+        meeting_nr = "".join(params["meeting_nr"].split())
+        timezone = params["timezone"]
+
+        try:
+            print("TRY")
+            global meeting_name, meeting_date
+            meeting_id, meeting_name, meeting_date = get_meetingID(myAccessToken, meeting_nr)
+            
+            # fetch participant data for meeting id
+            participant_info = get_participant_info(myAccessToken, meeting_id)
+            if not participant_info:
+                notification = "Could not fetch participant data for meeting number: " + meeting_nr
+                return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)  
+
+            export = create_xlsx_report(participant_info)
+            if not export:
+                notification = "Could not create participant report for meeting number: " + meeting_nr
+                return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
+            global meeting_nr_formatted
+            meeting_nr_formatted = meeting_nr[0:4] + " " + meeting_nr[4:7] + " " + meeting_nr[7:]
+            return render_template('main-fetch-success.html', app_url=APP_URL, username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
+        except Exception as e:
+            print(e)
+            try:
+                if myUsername:
+                    notification = "Could not fetch meeting data for meeting number: " + meeting_nr
+                    return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
+            except:
+                print("EXCEPT 2")
+                login_msg = "⚠️You have been logged out. Please log in to Webex to start."
+                return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # --- fetch participant data by meeting number
-@app.route('/main', methods=['POST'])
+""" @app.route('/main', methods=['POST'])
 def post_meeting_nr():
-    meeting_nr = "".join(request.form['meeting_nr'].split())
+    print("IN POST")
+    # meeting_nr = "".join(request.form['meeting_nr'].split())
     # fetch meeting_id by meeting number
+    meeting_nr = "ihf"
     try:
         global meeting_name, meeting_date
         meeting_id, meeting_name, meeting_date = get_meetingID(myAccessToken, meeting_nr)
@@ -98,7 +139,8 @@ def post_meeting_nr():
         participant_info = get_participant_info(myAccessToken, meeting_id)
         if not participant_info:
             notification = "Could not fetch participant data for meeting number: " + meeting_nr
-            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)            
+            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)  
+
         export = create_xlsx_report(participant_info)
         if not export:
             notification = "Could not create participant report for meeting number: " + meeting_nr
@@ -110,13 +152,11 @@ def post_meeting_nr():
         try:
             if myUsername:
                 notification = "Could not fetch meeting data for meeting number: " + meeting_nr
-                print(e)
                 return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
         except:
             login_msg = "⚠️You have been logged out. Please log in to Webex to start."
-            print(e)
             return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
-
+ """
 # meeting ID from meeting Nr
 def get_meetingID(mytoken, meeting_nr):
     url = f'{base_URL}v1/meetings?meetingNumber={meeting_nr}'
@@ -188,22 +228,24 @@ def create_xlsx_report(particpant_info):
         return False
 
 # --- successfully fetched participant data
-@app.route("/success")
+@app.route("/success", methods=['GET', 'POST'])
 def success():
-    try:
-        if myUsername:
-             return render_template('main-fetch-success.html', app_url=APP_URL, username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
-    except:
-        login_msg = "⚠️You have been logged out. Please log in to Webex to start."
-        return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
-
-# --- download participant report
-@app.route("/success", methods=['POST'])
-def download_report():
-    return send_file(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
-                     mimetype='application/vnd.ms-excel',
-                     attachment_filename=meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
-                     as_attachment=True)
+    if request.method == 'GET':
+        print("IN SUCCESS GET")
+        try:
+            if myUsername:
+                print("JUST BEFORE RENDERING THE FUCKING TEMPLATE")
+                return render_template('main-fetch-success.html', app_url=APP_URL, username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
+        except:
+            print("IN EXCEPT GET")
+            login_msg = "⚠️You have been logged out. Please log in to Webex to start."
+            return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
+    if request.method == 'POST':
+        print("IN SUCCESS POST")
+        return send_file(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
+                        mimetype='application/vnd.ms-excel',
+                        attachment_filename=meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
+                        as_attachment=True)
 
 # --- help page
 @app.route("/help")
