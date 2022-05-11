@@ -87,7 +87,7 @@ def get_myDetails(mytoken):
 def home():
     try:
         myUsername=str(datastore.get('myUsername'))
-        if myUsername != None:
+        if myUsername != "None":
             return render_template('main-fetch.html', app_url=APP_URL, username=myUsername)
     except:
         return redirect('/')
