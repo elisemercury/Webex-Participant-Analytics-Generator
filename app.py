@@ -110,11 +110,9 @@ def post_meeting_nr():
         try:
             if myUsername:
                 notification = "Could not fetch meeting data for meeting number: " + meeting_nr
-                print(e)
                 return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
         except:
             login_msg = "⚠️You have been logged out. Please log in to Webex to start."
-            print(e)
             return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # meeting ID from meeting Nr
