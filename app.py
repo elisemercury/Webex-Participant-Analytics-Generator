@@ -4,6 +4,7 @@ import urllib.parse
 import datetime
 import xlsxwriter
 import os
+import pytz
 
 # --- base variables
 base_URL = os.environ["BASE_URL"]
@@ -73,7 +74,6 @@ def get_token(myRedirectURI, teamsAuthCode, myClientID, myClientSecret):
 def get_myDetails(mytoken):
     header = {'Authorization': "Bearer " + mytoken,'content-type': 'application/json; charset=utf-8'}
     result = requests.get(url=base_URL+"v1/people/me", headers=header)
-    print(result.json())
     return result.json()["userName"]
 
 # login successfull, now enter meeting nr to fetch data for
@@ -154,37 +154,50 @@ def create_xlsx_report(particpant_info):
 
         worksheet.set_column(0, 0, 30)
         worksheet.set_column(1, 1, 25)
-        worksheet.set_column(2, 3, 15)
-        worksheet.set_column(4, 4, 20)
+        worksheet.set_column(2, 4, 15)
+        worksheet.set_column(5, 5, 20)
 
         worksheet.write(0, 0, "Participant Name", bold)
         worksheet.write(0, 1, "Email", bold)
         worksheet.write(0, 2, "Joined Time", bold)
         worksheet.write(0, 3, "Left Time", bold)
-        worksheet.write(0, 4, "Total Attendence", bold)
+        worksheet.write(0, 4, "Timezone", bold)
+        worksheet.write(0, 5, "Total Attendence", bold)
 
         row, col = 1, 0
+
+        occurences = list()
         for participant in particpant_info:
+            occurences.append((datetime.datetime.strptime(participant["joinedTime"], '%Y-%m-%dT%H:%M:%SZ').date()))
+        if len(set(occurences)) != 1:
+            now = datetime.datetime.now(pytz.utc).date()
+            recent_date = max(dt for dt in occurences if dt < now)
+        else:
+            recent_date = occurences[0]
+
+        for participant in particpant_info:
+            joined = datetime.datetime.strptime(participant["joinedTime"], '%Y-%m-%dT%H:%M:%SZ')
             if participant["email"][0:7] == "machine" and participant["devices"][0]["deviceType"] == "tp_endpoint":
                 pass
-            else:
+            elif joined.date() == recent_date:
                 worksheet.write(row, col, participant["displayName"])
                 worksheet.write(row, col+1, participant["email"])
 
-                joined = datetime.datetime.strptime(participant["joinedTime"], '%Y-%m-%dT%H:%M:%SZ')
                 left = datetime.datetime.strptime(participant["leftTime"], '%Y-%m-%dT%H:%M:%SZ')
+                timezone = pytz.utc.localize(joined)
 
                 worksheet.write_datetime(row, col+2, joined.time(), date_format)
                 worksheet.write_datetime(row, col+3, left.time(), date_format)
+                worksheet.write(row, col+4, str(timezone.tzname()) + " " + str(timezone)[19:])
 
                 total = left - joined 
 
-                worksheet.write_datetime(row, col+4, total, date_format)
+                worksheet.write_datetime(row, col+5, total, date_format, bold)
                 row += 1
             
         workbook.close()
         return True
-    except:
+    except Exception as e:
         return False
 
 # --- successfully fetched participant data
