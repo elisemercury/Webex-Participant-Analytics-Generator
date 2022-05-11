@@ -43,9 +43,9 @@ def gologin():
         teamsAuthCode = query.split('=', 1)[-1]
 
         # With the 'code', now get your real accesss token.
+        global myAccessToken
         myAccessToken = get_token(myRedirectURI, teamsAuthCode, myClientID, myClientSecret)
-        datastore.set("myAccessToken", myAccessToken)
-        
+
     if myAccessToken:
         myUsername = get_myDetails(myAccessToken)
         datastore.set("myUsername", myUsername)
@@ -96,7 +96,6 @@ def home():
 @app.route('/main', methods=['POST'])
 def post_meeting_nr():
     myUsername=datastore.get('myUsername').decode()
-    myAccessToken=datastore.get('myAccessToken').decode()
     meeting_nr = "".join(request.form['meeting_nr'].split())
     # fetch meeting_id by meeting number
     try:
@@ -120,7 +119,7 @@ def post_meeting_nr():
     except Exception as e:
         print(e)
         try:
-            if myUsername:
+            if myAccessToken:
                 notification = "Could not fetch meeting data for meeting number: " + meeting_nr
                 return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
         except:
