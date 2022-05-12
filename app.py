@@ -1,11 +1,12 @@
-from flask import Flask, redirect, request, render_template, send_file
+from flask import Flask, redirect, request, render_template, send_file, session
+from flask_session import Session
 import requests
 import urllib.parse
 import datetime
 import xlsxwriter
 import os
 import pytz
-import redis
+from redis import Redis
 
 # --- base variables
 base_URL = os.environ["BASE_URL"]
@@ -15,21 +16,27 @@ myScope = os.environ["SCOPE"]
 myRedirectURI = os.environ["REDIRECT_URL"]
 APP_URL = os.environ["APP_URL"]
 datastore = redis.from_url(os.environ['REDIS_URL'])
-datastore.flushdb()
+
 
 app = Flask(__name__)
+SESSION_TYPE = 'redis'
+SESSION_REDIS = Redis.from_url(url=datastore)
+app.config.from_object(__name__)
+Session(app)
 
 # --- landing page
 @app.route('/')
 def hello():
-    datastore.flushdb()
     login_msg = "Please log in with Webex to start."
     return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
 
 # --- perform login
 @app.route('/gologin')
 def gologin():
-    datastore.flushdb()
+    try:
+        wx_domain = request.form['wxDomain'].split()
+    except:
+        print("isuuueee")
     query = request.url
 
     if 'code' not in query:
@@ -43,12 +50,12 @@ def gologin():
         teamsAuthCode = query.split('=', 1)[-1]
 
         # With the 'code', now get your real accesss token.
-        global myAccessToken
-        myAccessToken = get_token(myRedirectURI, teamsAuthCode, myClientID, myClientSecret)
+        session["myAccessToken"] = get_token(myRedirectURI, teamsAuthCode, myClientID, myClientSecret)
+        print(session["myAccessToken"])
+        
 
-    if myAccessToken:
-        myUsername = get_myDetails(myAccessToken)
-        datastore.set("myUsername", myUsername)
+    if session["myAccessToken"]:
+        session["myUsername"] = get_myDetails(session["myAccessToken"])
         return redirect('/main')
     else:
         login_msg = "There was an issue authenticating you with Webex. Please try again."
@@ -86,46 +93,39 @@ def get_myDetails(mytoken):
 @app.route('/main')
 def home():
     try:
-        myUsername=datastore.get('myUsername').decode()
-        if myUsername != "None":
-            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername)
+        if session["myUsername"]:
+            return render_template('main-fetch.html', app_url=APP_URL, username=session["myUsername"])
     except:
-        return redirect('/')
+        return redirect('/logout')
 
 # --- fetch participant data by meeting number
 @app.route('/main', methods=['POST'])
 def post_meeting_nr():
-    myUsername=datastore.get('myUsername').decode()
     meeting_nr = "".join(request.form['meeting_nr'].split())
     # fetch meeting_id by meeting number
     try:
-        meeting_id, meeting_name, meeting_date = get_meetingID(myAccessToken, meeting_nr)
-        datastore.set("meeting_name", meeting_name)
-        datastore.set("meeting_date", meeting_date)
+        meeting_id, session["meeting_name"], session["meeting_date"] = get_meetingID(session["myAccessToken"], meeting_nr)      
         
         # fetch participant data for meeting id
-        participant_info = get_participant_info(myAccessToken, meeting_id)
+        participant_info = get_participant_info(session["myAccessToken"], meeting_id)
         if not participant_info:
             notification = "Could not fetch participant data for meeting number: " + meeting_nr
-            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)            
+            return render_template('main-fetch.html', app_url=APP_URL, username=session["myUsername"], notification=notification)            
         export = create_xlsx_report(participant_info)
         if not export:
             notification = "Could not create participant report for meeting number: " + meeting_nr
-            return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
+            return render_template('main-fetch.html', app_url=APP_URL, username=session["myUsername"], notification=notification)
         
-        meeting_nr_formatted = meeting_nr[0:4] + " " + meeting_nr[4:7] + " " + meeting_nr[7:]
-        datastore.set("meeting_nr_formatted", meeting_nr_formatted)
+        session["meeting_nr_formatted"] = meeting_nr[0:4] + " " + meeting_nr[4:7] + " " + meeting_nr[7:]
         return redirect('/success')
     except Exception as e:
         print(e)
         try:
-            if myAccessToken:
+            if session["myUsername"]:
                 notification = "Could not fetch meeting data for meeting number: " + meeting_nr
-                return render_template('main-fetch.html', app_url=APP_URL, username=myUsername, notification=notification)
+                return render_template('main-fetch.html', app_url=APP_URL, username=session["myUsername"], notification=notification)
         except:
-            datastore.flushdb()
-            login_msg = "⚠️You have been logged out. Please log in with Webex to start."
-            return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
+            return redirect('/logout')
 
 # meeting ID from meeting Nr
 def get_meetingID(mytoken, meeting_nr):
@@ -154,10 +154,8 @@ def get_participant_info(mytoken, meeting_id):
 
 # create participant report
 def create_xlsx_report(particpant_info):
-    meeting_name=datastore.get("meeting_name").decode()
-    meeting_date=datastore.get("meeting_date").decode()
     try:
-        workbook = xlsxwriter.Workbook(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx')
+        workbook = xlsxwriter.Workbook(session["meeting_name"] + "_" + session["meeting_date"] + '_participant_analytics.xlsx')
         worksheet = workbook.add_worksheet()
 
         bold = workbook.add_format({'bold': True})
@@ -216,30 +214,30 @@ def create_xlsx_report(particpant_info):
 @app.route("/success")
 def success():
     try:
-        meeting_name=datastore.get("meeting_name").decode()
-        meeting_nr_formatted=datastore.get("meeting_nr_formatted").decode()
-        myUsername=datastore.get('myUsername').decode()
-        if myUsername:
-             return render_template('main-fetch-success.html', app_url=APP_URL, username=myUsername, meeting_nr=meeting_nr_formatted, meeting_name=meeting_name)
+        if session["myUsername"]:
+             return render_template('main-fetch-success.html', app_url=APP_URL, username=session["myUsername"], meeting_nr=session["meeting_nr_formatted"], meeting_name=session["meeting_name"])
     except:
-        datastore.flushdb()
-        login_msg = "⚠️You have been logged out. Please log in with Webex to start."
-        return render_template('login.html', app_url=APP_URL, login_msg=login_msg)
+        return redirect('/logout')
 
 # --- download participant report
 @app.route("/success", methods=['POST'])
 def download_report():
-    meeting_name=datastore.get("meeting_name").decode()
-    meeting_date=datastore.get("meeting_date").decode()
-    return send_file(meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
+    return send_file(session["meeting_name"] + "_" + session["meeting_date"] + '_participant_analytics.xlsx',
                      mimetype='application/vnd.ms-excel',
-                     attachment_filename=meeting_name + "_" + meeting_date + '_participant_analytics.xlsx',
+                     attachment_filename=session["meeting_name"] + "_" + session["meeting_date"] + '_participant_analytics.xlsx',
                      as_attachment=True)
 
 # --- help page
 @app.route("/help")
 def help():
     return render_template('help.html', app_url=APP_URL)
+
+# --- help page
+@app.route("/logout")
+def logout():
+    for key in list(session.keys()):
+        session.pop(key)
+    return redirect('/')
 
 # --- handle 404 errors
 @app.errorhandler(404)
