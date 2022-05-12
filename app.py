@@ -16,7 +16,7 @@ myClientSecret = os.environ["CLIENT_SECRET"]
 myScope = os.environ["SCOPE"]
 myRedirectURI = os.environ["REDIRECT_URL"]
 APP_URL = os.environ["APP_URL"]
-datastore = redis.from_url(os.environ['REDIS_URL'])
+datastore = os.environ['REDIS_URL']
 
 
 app = Flask(__name__)
