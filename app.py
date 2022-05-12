@@ -6,6 +6,7 @@ import datetime
 import xlsxwriter
 import os
 import pytz
+import redis
 from redis import Redis
 
 # --- base variables
