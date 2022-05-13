@@ -228,6 +228,10 @@ def success():
 # --- download participant report
 @app.route("/success", methods=['POST'])
 def download_report():
+    chars = ['\', '/', ':', '*', '?', '"', '<', '>', '|']
+    for char in chars:
+        session["meeting_name"] = session["meeting_name"].replace(char, "_")
+        
     return send_file(session["meeting_name"] + "_" + session["meeting_date"] + '_participant_analytics.xlsx',
                      mimetype='application/vnd.ms-excel',
                      attachment_filename=session["meeting_name"] + "_" + session["meeting_date"] + '_participant_analytics.xlsx',
