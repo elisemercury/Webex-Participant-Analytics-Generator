@@ -169,15 +169,16 @@ def create_xlsx_report(particpant_info):
 
         worksheet.set_column(0, 0, 30)
         worksheet.set_column(1, 1, 25)
-        worksheet.set_column(2, 4, 15)
+        worksheet.set_column(2, 5, 15)
         worksheet.set_column(5, 5, 20)
 
         worksheet.write(0, 0, "Participant Name", bold)
         worksheet.write(0, 1, "Email", bold)
-        worksheet.write(0, 2, "Joined Time", bold)
-        worksheet.write(0, 3, "Left Time", bold)
-        worksheet.write(0, 4, "Timezone", bold)
-        worksheet.write(0, 5, "Total Attendence", bold)
+        worksheet.write(0, 2, "Type", bold)
+        worksheet.write(0, 3, "Joined Time", bold)
+        worksheet.write(0, 4, "Left Time", bold)
+        worksheet.write(0, 5, "Timezone", bold)
+        worksheet.write(0, 6, "Total Attendence", bold)
 
         row, col = 1, 0
 
@@ -201,6 +202,12 @@ def create_xlsx_report(particpant_info):
                 print(4)
                 worksheet.write(row, col, participant["displayName"])
                 worksheet.write(row, col+1, participant["email"])
+                if participant["host"] == "True":
+                    worksheet.write(row, col+1, "Host")
+                elif participant["coHost"] == "True":
+                    worksheet.write(row, col+1, "Co-Host")
+                else:
+                    worksheet.write(row, col+1, "Attendee")
 
                 left = datetime.datetime.strptime(participant["leftTime"], '%Y-%m-%dT%H:%M:%SZ')
                 timezone = pytz.utc.localize(joined)
