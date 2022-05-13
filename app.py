@@ -180,35 +180,40 @@ def create_xlsx_report(particpant_info):
         occurences = list()
         for participant in particpant_info:
             occurences.append((datetime.datetime.strptime(participant["joinedTime"], '%Y-%m-%dT%H:%M:%SZ').date()))
+        print(1)
         if len(set(occurences)) != 1:
             now = datetime.datetime.now(pytz.utc).date()
             recent_date = max(dt for dt in occurences if dt < now)
+            print(2)
         else:
             recent_date = occurences[0]
+            print(3)
 
         for participant in particpant_info:
             joined = datetime.datetime.strptime(participant["joinedTime"], '%Y-%m-%dT%H:%M:%SZ')
             if participant["email"][0:7] == "machine" and participant["devices"][0]["deviceType"] == "tp_endpoint":
                 pass
             elif joined.date() == recent_date:
+                print(4)
                 worksheet.write(row, col, participant["displayName"])
                 worksheet.write(row, col+1, participant["email"])
 
                 left = datetime.datetime.strptime(participant["leftTime"], '%Y-%m-%dT%H:%M:%SZ')
                 timezone = pytz.utc.localize(joined)
-
+                print(5)
                 worksheet.write_datetime(row, col+2, joined.time(), date_format)
                 worksheet.write_datetime(row, col+3, left.time(), date_format)
                 worksheet.write(row, col+4, str(timezone.tzname()) + " " + str(timezone)[19:])
 
                 total = left - joined 
-
+                print(6)
                 worksheet.write_datetime(row, col+5, total, date_format)
                 row += 1
             
         workbook.close()
         return True
     except Exception as e:
+        print(e)
         return False
 
 # --- successfully fetched participant data
