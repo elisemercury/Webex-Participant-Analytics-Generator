@@ -198,9 +198,9 @@ def create_xlsx_report(particpant_info):
             elif joined.date() == recent_date:
                 worksheet.write(row, col, participant["displayName"])
                 worksheet.write(row, col+1, participant["email"])
-                if participant["host"] == "True":
+                if participant["host"] == True:
                     worksheet.write(row, col+2, "Host")
-                elif participant["coHost"] == "True":
+                elif participant["coHost"] == True:
                     worksheet.write(row, col+2, "Co-Host")
                 else:
                     worksheet.write(row, col+2, "Attendee")
