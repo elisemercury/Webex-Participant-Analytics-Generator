@@ -170,7 +170,7 @@ def create_xlsx_report(particpant_info):
         worksheet.set_column(0, 0, 30)
         worksheet.set_column(1, 1, 25)
         worksheet.set_column(2, 5, 15)
-        worksheet.set_column(5, 5, 20)
+        worksheet.set_column(6, 6, 20)
 
         worksheet.write(0, 0, "Participant Name", bold)
         worksheet.write(0, 1, "Email", bold)
